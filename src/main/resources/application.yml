@@ -1,0 +1,26 @@
+spring:
+  application:
+    name: migrateMongoToMaria
+  datasource:
+    url: jdbc:mariadb://127.0.0.1:3306/main?useUnicode=true&characterEncoding=UTF-8
+    driver-class-name: org.mariadb.jdbc.Driver
+    username:
+    password:
+    hikari:
+      pool-name: mariadb-pool
+      maximum-pool-size: 10
+  data:
+    mongodb:
+      uri: mongodb://localhost/test
+      authentication-database: admin
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: update
+
+logging:
+  level:
+    org.springframework.data.mongodb.core: DEBUG
+
+server:
+  port: 9009
