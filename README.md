@@ -1,3 +1,83 @@
+# Mongo to MariaDB Migrator (Spring Boot)
+
+Repository: [`mbasirmajd/rmshub-mongo2maria`](https://github.com/mbasirmajd/rmshub-mongo2maria)
+
+`rmshub-mongo2maria` is a small Spring Boot service that migrates a MongoDB collection into MariaDB by:
+
+- reading all documents from a MongoDB collection
+- creating a SQL table (if it does not exist) based on the first document's fields
+- inserting each document into the SQL table
+- creating join tables for array fields and inserting array values there
+
+It is meant as a pragmatic migration helper for simple collections (flat fields + arrays).
+
+## How it works (high level)
+
+1. Fetch all documents from a collection.
+2. Infer SQL schema from the first document:
+   - `_id` becomes `mongo_id` (`VARCHAR(50) UNIQUE`)
+   - `Integer` → `INT`
+   - `Double` → `DOUBLE`
+   - everything else (non-array) → `VARCHAR(255)`
+3. For each array field, create a join table: `{parentTable}_{fieldName}` with:
+   - `parent_id` (references parent `mongo_id`)
+   - `value` (`VARCHAR(255)`)
+4. Insert rows into the main table and join tables.
+
+## Requirements
+
+- Java 17+
+- MongoDB connection URI
+- MariaDB connection URL + username + password
+
+## Configuration
+
+Edit `src/main/resources/application.yml`:
+
+- `spring.data.mongodb.uri`
+- `spring.datasource.url`
+- `spring.datasource.username`
+- `spring.datasource.password`
+- `server.port` (default: `9009`)
+
+## Run
+
+```bash
+./mvnw spring-boot:run
+```
+
+## Trigger a migration (HTTP)
+
+The service exposes a simple endpoint:
+
+```http
+GET /migrate/{mongoCollection}/{sqlTable}
+```
+
+Example:
+
+```bash
+curl "http://localhost:9009/migrate/users/users"
+```
+
+This migrates MongoDB collection `users` into MariaDB table `users`.
+
+## Scheduled migration
+
+There is also a scheduled job that runs every hour (see `MongoToSqlScheduler`) and currently migrates:
+
+- collection: `amazement`
+- table: `amazement`
+
+Adjust it for your needs or remove it if you only want manual HTTP-triggered migrations.
+
+## Notes / limitations
+
+- Schema is inferred from the first document only.
+- Nested documents are stored as `VARCHAR(255)` using `.toString()`.
+- Large values may be truncated if they exceed `VARCHAR(255)`.
+- This is not a generic ETL framework; treat it as a starter utility and adapt as needed.
+
 # MogoTomaria
 
 
